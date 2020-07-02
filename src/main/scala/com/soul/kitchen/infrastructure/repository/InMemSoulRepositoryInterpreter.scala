@@ -3,22 +3,20 @@ package com.soul.kitchen.infrastructure.repository
 import cats.Applicative
 import cats.implicits._
 import com.soul.kitchen.domain.souls.Destination.Destination
-import com.soul.kitchen.domain.souls.{Soul, SoulRepositoryAlgebra}
+import com.soul.kitchen.domain.souls.{ Soul, SoulRepositoryAlgebra }
 
 import scala.collection.mutable
 import scala.util.Random
 
-class InMemSoulRepositoryInterpreter[F[_]: Applicative]
-    extends SoulRepositoryAlgebra[F] {
+class InMemSoulRepositoryInterpreter[F[_]: Applicative] extends SoulRepositoryAlgebra[F] {
 
   private[this] val souls: mutable.Map[Long, Soul] = mutable.Map()
 
   private[this] val generator: Random.type = Random
 
   def create(soul: Soul): F[Soul] = {
-//    val id = generator.nextId().toLong
-    val id = generator.nextInt(9999).toLong
-    val freshSoul = soul.copy(Some(id))
+    val id        = generator.nextInt().toLong
+    val freshSoul = soul.copy(id)
     souls += (id -> freshSoul)
     freshSoul.pure[F]
   }
@@ -30,9 +28,8 @@ class InMemSoulRepositoryInterpreter[F[_]: Applicative]
     }
 
   def update(soul: Soul): F[Option[Soul]] = {
-    val id = soul.id.get
-    souls.update(id, soul)
-    souls.get(id).pure[F]
+    souls.update(soul.id, soul)
+    souls.get(soul.id).pure[F]
   }
 
   def delete(id: Long): F[Unit] =

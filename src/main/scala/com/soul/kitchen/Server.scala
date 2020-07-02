@@ -20,15 +20,15 @@ object Server extends IOApp {
 
   def createServer =
     for {
-      config <- Resource.liftF(ConfigSource.default.loadF[IO, AppConfig])
-      soulRepo = InMemSoulRepositoryInterpreter[IO]
+      config        <- Resource.liftF(ConfigSource.default.loadF[IO, AppConfig])
+      soulRepo      = InMemSoulRepositoryInterpreter[IO]
       soulValidator = SoulValidationInterpreter[IO](soulRepo)
-      soulService = SoulService[IO](soulRepo, soulValidator)
-      httpApp = Router("/soul" -> SoulRepository[IO](soulService)).orNotFound
-      _ <- Resource.liftF(IO(DbInitializer.initializeDb(soulRepo)))
+      soulService   = SoulService[IO](soulRepo, soulValidator)
+      httpApp       = Router("/soul" -> SoulRepository[IO](soulService)).orNotFound
+      _             <- Resource.liftF(IO(DbInitializer.initializeDb(soulRepo)))
       server <- BlazeServerBuilder[IO]
-        .bindHttp(config.server.port, config.server.host)
-        .withHttpApp(httpApp)
-        .resource
+                 .bindHttp(config.server.port, config.server.host)
+                 .withHttpApp(httpApp)
+                 .resource
     } yield server
 }

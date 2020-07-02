@@ -17,12 +17,7 @@ object Destination extends Enumeration {
     }
 }
 import com.soul.kitchen.domain.souls.Destination._
-case class Soul(id: Option[Long],
-                name: String,
-                owner: String,
-                var destination: Destination = Unknown,
-                price: Int) {
-  override def toString: String = {
-    s"""[$id, $name, $owner, $destination, $price]"""
-  }
+case class Soul(id: Long, name: String, owner: String, destination: Destination = Unknown, price: Int) {
+  override def toString: String =
+    s"[id: $id, name: $name, owner: $owner, destination: $destination, price: $price]"
 }

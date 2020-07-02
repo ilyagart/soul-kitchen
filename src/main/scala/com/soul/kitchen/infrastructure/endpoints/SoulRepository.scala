@@ -3,8 +3,8 @@ package com.soul.kitchen.infrastructure.endpoints
 import cats.Monad
 import cats.effect._
 import cats.implicits._
-import com.soul.kitchen.domain.souls.{Destination, Soul, SoulService}
-import com.soul.kitchen.domain.{SoulAlreadyExistsError, SoulNotFoundError}
+import com.soul.kitchen.domain.souls.{ Destination, Soul, SoulService }
+import com.soul.kitchen.domain.{ SoulAlreadyExistsError, SoulNotFoundError }
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -26,14 +26,14 @@ class SoulRepository[F[_]: Monad: Sync] extends Http4sDsl[F] {
 
   private def endpoints(soulService: SoulService[F]) =
     getAllSouls(soulService) <+> getSoulById(soulService) <+>
-      createSoul(soulService) <+> updateSoul(soulService) //<+>
-  //deleteSoul(soulService)
+      createSoul(soulService) <+> updateSoul(soulService) <+>
+      deleteSoul(soulService)
 
   private[this] def createSoul(soulService: SoulService[F]): HttpRoutes[F] =
     HttpRoutes.of[F] {
       case req @ POST -> Root =>
         val result = for {
-          soul <- req.as[Soul]
+          soul     <- req.as[Soul]
           response <- soulService.create(soul).value
         } yield response
 
@@ -60,15 +60,15 @@ class SoulRepository[F[_]: Monad: Sync] extends Http4sDsl[F] {
       case GET -> Root =>
         for {
           souls <- soulService.list()
-          resp <- Ok(souls.asJson)
+          resp  <- Ok(souls.asJson)
         } yield resp
     }
 
   private[this] def updateSoul(soulService: SoulService[F]): HttpRoutes[F] =
     HttpRoutes.of[F] {
-      case req @ PUT -> Root / soulId =>
+      case req @ PUT -> Root =>
         val result = for {
-          soul <- req.as[Soul]
+          soul     <- req.as[Soul]
           response <- soulService.update(soul).value
         } yield response
 
@@ -78,21 +78,19 @@ class SoulRepository[F[_]: Monad: Sync] extends Http4sDsl[F] {
         }
     }
 
-//  private[this] def deleteSoul(soulService: SoulService[F]): HttpRoutes[F] =
-//    HttpRoutes.of[F] {
-//      case DELETE -> Root / soulId =>
-//
-//        val result = for {
-//          soul <- soulService.get(soulId.toLong)
-//          _ <- soulService.delete(soul)
-//        } yield soul
-//
-//        result match {
-//          case Left(SoulNotFoundError)    => NotFound("unlucky")
-//          case Right(value) => Ok(s"soul got deleted")
-//        }
-//
-//    }
+  private[this] def deleteSoul(soulService: SoulService[F]): HttpRoutes[F] =
+    HttpRoutes.of[F] {
+      case DELETE -> Root / soulId =>
+        val result = for {
+          soul     <- soulService.get(soulId.toLong)
+          response <- soulService.delete(soul)
+        } yield (soul, response)
+
+        result.value.flatMap {
+          case Right(value)            => Ok(s"soul with id: $soulId and name ${value._1.name} got deleted")
+          case Left(SoulNotFoundError) => NotFound("unlucky")
+        }
+    }
 
 }
 
