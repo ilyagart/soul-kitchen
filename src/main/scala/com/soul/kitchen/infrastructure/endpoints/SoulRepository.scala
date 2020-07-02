@@ -82,12 +82,12 @@ class SoulRepository[F[_]: Monad: Sync] extends Http4sDsl[F] {
     HttpRoutes.of[F] {
       case DELETE -> Root / soulId =>
         val result = for {
-          soul     <- soulService.get(soulId.toLong)
-          response <- soulService.delete(soul)
-        } yield (soul, response)
+          soul <- soulService.get(soulId.toLong)
+          _    <- soulService.delete(soul)
+        } yield soul
 
         result.value.flatMap {
-          case Right(value)            => Ok(s"soul with id: $soulId and name ${value._1.name} got deleted")
+          case Right(value)            => Ok(s"soul with id: $soulId and name ${value.name} got deleted")
           case Left(SoulNotFoundError) => NotFound("unlucky")
         }
     }
